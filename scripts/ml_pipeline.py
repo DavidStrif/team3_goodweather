@@ -148,8 +148,6 @@ def time_series_cv_metrics(X, y, features, n_splits=N_SPLITS, alpha=1.0):
             'y_pred_std': float(np.nanstd(y_pred)),
             'y_pred_has_nan': y_pred_has_nan
         })
-        X_val_aug = np.hstack([np.ones((X_val.shape[0],1)), X_val])
-        y_pred = X_val_aug.dot(coef)
         mae = float(np.mean(np.abs(y_val - y_pred)))
         rmse = float(np.sqrt(np.mean((y_val - y_pred) ** 2)))
         mape = float(np.mean(np.abs((y_val - y_pred) / np.where(y_val == 0, 1e-8, y_val))) * 100.0)
