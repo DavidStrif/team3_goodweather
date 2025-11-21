@@ -364,11 +364,14 @@ def run_pipeline():
         print(f'Note: {missing} rows have missing target in cleaned_df and will be excluded from CV')
         cleaned_df = cleaned_df.loc[non_null_mask_clean].reset_index(drop=True)
         y_clean = y_clean.loc[non_null_mask_clean].reset_index(drop=True)
-    cleaned_metrics, imp_cleaned = time_series_cv_metrics(cleaned_df, y_clean, cleaned_features)
+    cleaned_metrics, imp_cleaned = time_series_cv_metrics(cleaned_df, y_clean, cleaned_features, alpha=best_alpha)
     imp_cleaned.to_csv(IMP_CLEAN, header=['importance'])
 
     # Save report
     report = {
+        'alpha_grid': list(ALPHA_GRID),
+        'best_alpha': best_alpha,
+        'alpha_grid_results': alpha_results,
         'baseline_metrics': baseline_metrics,
         'cleaned_metrics': cleaned_metrics,
         'dropped_features': drop_list,
@@ -379,9 +382,13 @@ def run_pipeline():
     with open(REPORT, 'w') as f:
         f.write('ML Pipeline Report\n')
         f.write('==================\n\n')
-        f.write('Baseline metrics (CV mean):\n')
+        f.write('Ridge Alpha Grid Search:\n')
+        f.write(f'Alpha grid: {ALPHA_GRID}\n')
+        f.write(f'Best alpha selected: {best_alpha} (by CV RMSE)\n')
+        f.write('\n')
+        f.write('Baseline metrics (CV mean) with best alpha:\n')
         f.write(json.dumps(baseline_metrics, indent=2))
-        f.write('\n\nCleaned metrics (CV mean):\n')
+        f.write('\n\nCleaned metrics (CV mean, Top-30 preserved) with best alpha:\n')
         f.write(json.dumps(cleaned_metrics, indent=2))
         f.write('\n\nDropped features:\n')
         for c in drop_list:
