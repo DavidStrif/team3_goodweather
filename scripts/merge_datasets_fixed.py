@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 
 RAW = Path('1_DatasetCharacteristics/raw_data')
-OUT = Path('.')
+OUT = Path('1_DatasetCharacteristics/processed_data')
 
 # --- holiday helpers (copied from notebook) ---
 
@@ -101,6 +101,7 @@ def main():
     final_df = final_df.sort_values(by='Datum')
     final_df = add_holiday_indicator(final_df, schleswig_holstein_holidays, date_column='Datum')
 
+    OUT.mkdir(parents=True, exist_ok=True)
     out = OUT / 'combined_data_outer.csv'
     final_df.to_csv(out, index=False)
     print('Wrote', out, 'rows:', len(final_df))
