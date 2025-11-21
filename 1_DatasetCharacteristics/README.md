@@ -69,3 +69,39 @@ Notes / recommendations
 - For large datasets, adapt the script to process by chunks or aggregate per-date before joining to reduce memory usage.
 
 If you want, I can add a `requirements.txt`, a short top-level README entry, or a small CI check that ensures the merge runs in the project environment.
+
+How to run the One Big Pot pipeline & baseline (quick)
+
+1. Build the One Big Pot features (continuous timeline, weather merged, lags/rolls):
+
+```bash
+# from repository root
+python3 scripts/one_big_pot.py
+```
+
+This writes `1_DatasetCharacteristics/processed_data/one_big_pot_features.csv`.
+
+2. Split into train/test feature files (already provided by the helper):
+
+```bash
+python3 -c "import pandas as pd; df=pd.read_csv('1_DatasetCharacteristics/processed_data/one_big_pot_features.csv', parse_dates=['Datum']); df[df.is_test==False].to_csv('1_DatasetCharacteristics/processed_data/train_features.csv', index=False); df[df.is_test==True].to_csv('1_DatasetCharacteristics/processed_data/test_features.csv', index=False)"
+```
+
+3. Train a simple linear baseline and evaluate (80/20 split):
+
+```bash
+python3 scripts/train_baseline.py
+```
+
+4. Fit on full training data and predict the test set:
+
+```bash
+python3 scripts/predict_baseline.py
+```
+
+Files produced by the baseline scripts:
+- `1_DatasetCharacteristics/processed_data/train_features.csv`
+- `1_DatasetCharacteristics/processed_data/test_features.csv`
+- `1_DatasetCharacteristics/processed_data/test_predictions_baseline.csv`
+
+If you'd like, I can add a short `notebooks/baseline_model.ipynb` (interactive) and wire the scripts into a small `Makefile` or Make targets for reproducible runs.
