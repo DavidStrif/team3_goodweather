@@ -32,12 +32,22 @@ Outputs saved in `1_DatasetCharacteristics/processed_data/` (committed):
 
 How to reproduce locally
 
-1. Create and activate a Python virtual environment and install dependencies:
+1. Create and activate a Python virtual environment and install dependencies.
+
+Recommended (uses `requirements.txt` at repository root):
 
 ```bash
+# from repository root
 python3 -m venv .venv
 source .venv/bin/activate
-pip install pandas nbconvert ipykernel
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+If you prefer to install packages directly (equivalent):
+
+```bash
+pip install pandas nbconvert ipykernel jupyter-client nbclient
 ```
 
 2. Run the merge script (recommended):
