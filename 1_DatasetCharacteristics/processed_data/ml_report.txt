@@ -1,0 +1,89 @@
+ML Pipeline Report
+==================
+
+Baseline metrics (CV mean):
+{
+  "mae": 113.78740746488351,
+  "rmse": 164.21104595269713,
+  "mape": 11.001264589189974
+}
+
+Cleaned metrics (CV mean):
+{
+  "mae": 125.21117944320102,
+  "rmse": 173.41679480581334,
+  "mape": 12.215963255879014
+}
+
+Dropped features:
+- roll_mean_28
+- Wettercode
+- wcode_71.0
+- cloud_bin
+- wcode_68.0
+- wcode_17.0
+- wcode_3.0
+- Umsatz_test
+- wcode_79.0
+- dayofyear
+- wcode_55.0
+- is_holiday
+
+Rare weather-code columns grouped:
+- wcode_17.0
+- wcode_28.0
+- wcode_3.0
+- wcode_49.0
+- wcode_53.0
+- wcode_55.0
+- wcode_68.0
+- wcode_69.0
+- wcode_71.0
+- wcode_73.0
+- wcode_75.0
+- wcode_77.0
+- wcode_79.0
+
+Feature importances (baseline top 20):
+weekday                44.677858
+wcode_20.0              6.785308
+wcode_65.0              5.230674
+month                   5.212963
+wind_ma_3d              4.388254
+Bewoelkung              4.136108
+precip_ma_3d            3.259281
+wcode_63.0              3.250239
+wcode_5.0               2.704801
+wcode_21.0              2.431644
+wcode_10.0              2.351376
+wcode_61.0              2.265716
+Temperatur              2.095627
+wcode_28.0              1.794247
+wcode_95.0              1.684593
+temp_ma_3d              1.572678
+roll_mean_7             1.400177
+wcode_0.0               1.348891
+Windgeschwindigkeit     1.341339
+Niederschlag            1.059183
+
+Feature importances (cleaned top 20):
+wcode_20.0             82.149929
+wcode_5.0              59.182751
+weekday                46.146258
+wcode_63.0             39.055596
+wcode_10.0             32.546845
+wcode_21.0             30.435798
+wcode_95.0             29.137799
+wcode_0.0              25.558396
+wcode_65.0             24.676162
+wcode_45.0             20.618796
+wcode_61.0             17.089195
+wcode_22.0             15.739123
+wcode_rare             12.677571
+Bewoelkung              6.554339
+Temperatur              4.577975
+temp_ma_3d              3.809244
+precip_ma_3d            3.398591
+month                   3.319748
+roll_mean_7             1.302080
+Windgeschwindigkeit     1.188521
