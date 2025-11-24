@@ -1,0 +1,43 @@
+{
+  "baseline_metrics": {
+    "mae": 113.78740746488351,
+    "rmse": 164.21104595269713,
+    "mape": 11.001264589189974
+  },
+  "cleaned_metrics": {
+    "mae": 125.21117944320102,
+    "rmse": 173.41679480581334,
+    "mape": 12.215963255879014
+  },
+  "dropped_features": [
+    "roll_mean_28",
+    "Wettercode",
+    "wcode_71.0",
+    "cloud_bin",
+    "wcode_68.0",
+    "wcode_17.0",
+    "wcode_3.0",
+    "Umsatz_test",
+    "wcode_79.0",
+    "dayofyear",
+    "wcode_55.0",
+    "is_holiday"
+  ],
+  "rare_wcodes_grouped": [
+    "wcode_17.0",
+    "wcode_28.0",
+    "wcode_3.0",
+    "wcode_49.0",
+    "wcode_53.0",
+    "wcode_55.0",
+    "wcode_68.0",
+    "wcode_69.0",
+    "wcode_71.0",
+    "wcode_73.0",
+    "wcode_75.0",
+    "wcode_77.0",
+    "wcode_79.0"
+  ],
+  "feature_count_before": 48,
+  "feature_count_after": 30
+}
