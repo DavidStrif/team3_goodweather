@@ -22,6 +22,7 @@ import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
+import xgboost as xgb
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / '1_DatasetCharacteristics' / 'processed_data'
@@ -43,6 +44,21 @@ WCODE_PREFIX = 'wcode_'
 TOP_KEEP = 30  # number of top baseline features to preserve when reducing
 # Grid search alphas for ridge
 ALPHA_GRID = [0.1, 1.0, 10.0, 100.0, 200.0]
+
+# XGBoost parameters
+XGB_PARAMS = {
+    'objective': 'reg:squarederror',
+    'eval_metric': 'rmse',
+    'random_state': RANDOM_STATE,
+    'verbosity': 0
+}
+# XGBoost hyperparameter grid
+XGB_GRID = {
+    'n_estimators': [100, 200],
+    'max_depth': [3, 6],
+    'learning_rate': [0.1, 0.3],
+    'subsample': [0.8, 1.0]
+}
 
 
 def load_train():
@@ -163,6 +179,85 @@ def time_series_cv_metrics(X, y, features, n_splits=N_SPLITS, alpha=1.0):
         diag_df.to_csv(OUT_DIR / 'ml_fold_diagnostics.csv', index=False)
     except Exception:
         pass
+    return mean_metrics, imp_df
+
+
+def xgboost_cv_metrics(X, y, features, n_splits=N_SPLITS, **xgb_params):
+    """XGBoost cross-validation with time series splits."""
+    n = len(X)
+    splits = _time_series_splits(n, n_splits=n_splits)
+    metrics = []
+    importances = []
+    fold_diags = []
+    fold = 0
+    
+    for train_idx, val_idx in splits:
+        fold += 1
+        X_train = X.iloc[train_idx][features].fillna(0)
+        X_val = X.iloc[val_idx][features].fillna(0)
+        y_train = y.iloc[train_idx]
+        y_val = y.iloc[val_idx]
+        
+        try:
+            # Create XGBoost model
+            model = xgb.XGBRegressor(**XGB_PARAMS, **xgb_params)
+            
+            # Fit model
+            model.fit(
+                X_train, y_train,
+                eval_set=[(X_val, y_val)],
+                early_stopping_rounds=10,
+                verbose=False
+            )
+            
+            # Predict
+            y_pred = model.predict(X_val)
+            
+            # Calculate metrics
+            mae = float(np.mean(np.abs(y_val - y_pred)))
+            rmse = float(np.sqrt(np.mean((y_val - y_pred) ** 2)))
+            mape = float(np.mean(np.abs((y_val - y_pred) / np.where(y_val == 0, 1e-8, y_val))) * 100.0)
+            
+            metrics.append({'fold': fold, 'mae': mae, 'rmse': rmse, 'mape': mape})
+            
+            # Feature importances
+            imp = pd.Series(model.feature_importances_, index=features)
+            importances.append(imp)
+            
+            # Fold diagnostics
+            fold_diags.append({
+                'fold': fold,
+                'best_iteration': int(model.best_iteration) if hasattr(model, 'best_iteration') else -1,
+                'n_estimators_used': int(model.n_estimators),
+                'y_val_mean': float(np.mean(y_val)),
+                'y_val_std': float(np.std(y_val)),
+                'y_pred_mean': float(np.mean(y_pred)),
+                'y_pred_std': float(np.std(y_pred))
+            })
+            
+        except Exception as e:
+            print(f"XGBoost fold {fold} failed: {e}")
+            # Fill with NaN metrics for failed fold
+            metrics.append({'fold': fold, 'mae': float('nan'), 'rmse': float('nan'), 'mape': float('nan')})
+            imp = pd.Series(np.full(len(features), np.nan), index=features)
+            importances.append(imp)
+    
+    # Aggregate results
+    if importances:
+        imp_df = pd.concat(importances, axis=1).mean(axis=1).sort_values(ascending=False)
+    else:
+        imp_df = pd.Series(index=features, dtype=float)
+    
+    mean_metrics = {k: float(np.nanmean([m[k] for m in metrics])) for k in ['mae', 'rmse', 'mape']}
+    
+    # Write XGBoost fold diagnostics
+    try:
+        if fold_diags:
+            diag_df = pd.DataFrame(fold_diags)
+            diag_df.to_csv(OUT_DIR / 'ml_xgboost_fold_diagnostics.csv', index=False)
+    except Exception:
+        pass
+    
     return mean_metrics, imp_df
 
 
@@ -314,9 +409,48 @@ def run_pipeline():
     if best_alpha is None:
         best_alpha = 1.0
     print('Best alpha chosen:', best_alpha, 'with RMSE:', best_rmse)
-    # use best alpha for baseline
+    # use best alpha for baseline Ridge
     baseline_metrics, imp_baseline = time_series_cv_metrics(X, y, features, alpha=best_alpha)
     imp_baseline.to_csv(IMP_BASE, header=['importance'])
+    
+    # Train XGBoost baseline with grid search
+    print('Running XGBoost baseline with grid search...')
+    xgb_results = {}
+    best_xgb_params = None
+    best_xgb_rmse = float('inf')
+    
+    # Simple grid search for XGBoost
+    param_combinations = [
+        {'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1, 'subsample': 0.8},
+        {'n_estimators': 200, 'max_depth': 3, 'learning_rate': 0.1, 'subsample': 1.0},
+        {'n_estimators': 100, 'max_depth': 6, 'learning_rate': 0.3, 'subsample': 0.8},
+        {'n_estimators': 200, 'max_depth': 6, 'learning_rate': 0.1, 'subsample': 1.0}
+    ]
+    
+    for params in param_combinations:
+        try:
+            params_key = str(params)
+            print(f' XGBoost params: {params}')
+            xgb_metrics, xgb_imp = xgboost_cv_metrics(X, y, features, **params)
+            xgb_results[params_key] = {'params': params, 'metrics': xgb_metrics}
+            print(f' XGBoost rmse: {xgb_metrics.get("rmse")}')
+            
+            if xgb_metrics.get('rmse', float('inf')) < best_xgb_rmse:
+                best_xgb_rmse = xgb_metrics.get('rmse')
+                best_xgb_params = params
+                baseline_xgb_metrics = xgb_metrics
+                imp_xgb_baseline = xgb_imp
+        except Exception as e:
+            print(f' XGBoost params {params} failed: {e}')
+    
+    # Save XGBoost baseline importances
+    if best_xgb_params is not None:
+        imp_xgb_baseline.to_csv(OUT_DIR / 'feature_importances_xgb_baseline.csv', header=['importance'])
+        print(f'Best XGBoost params: {best_xgb_params} with RMSE: {best_xgb_rmse}')
+    else:
+        print('XGBoost baseline training failed')
+        baseline_xgb_metrics = {'mae': float('nan'), 'rmse': float('nan'), 'mape': float('nan')}
+        imp_xgb_baseline = pd.Series(dtype=float)
 
     # Analyze features
     print('Analyzing features...')
@@ -354,7 +488,7 @@ def run_pipeline():
             cleaned_df[c] = pd.factorize(cleaned_df[c])[0]
 
     # Retrain on cleaned features
-    print('Running cleaned CV...')
+    print('Running cleaned CV with Ridge...')
     y_clean = target_series(cleaned_df)
     non_null_mask_clean = y_clean.notna()
     if non_null_mask_clean.sum() < len(y_clean):
@@ -362,16 +496,36 @@ def run_pipeline():
         print(f'Note: {missing} rows have missing target in cleaned_df and will be excluded from CV')
         cleaned_df = cleaned_df.loc[non_null_mask_clean].reset_index(drop=True)
         y_clean = y_clean.loc[non_null_mask_clean].reset_index(drop=True)
+    
+    # Ridge on cleaned features
     cleaned_metrics, imp_cleaned = time_series_cv_metrics(cleaned_df, y_clean, cleaned_features, alpha=best_alpha)
     imp_cleaned.to_csv(IMP_CLEAN, header=['importance'])
+    
+    # XGBoost on cleaned features
+    print('Running cleaned CV with XGBoost...')
+    if best_xgb_params is not None:
+        try:
+            cleaned_xgb_metrics, imp_xgb_cleaned = xgboost_cv_metrics(cleaned_df, y_clean, cleaned_features, **best_xgb_params)
+            imp_xgb_cleaned.to_csv(OUT_DIR / 'feature_importances_xgb_cleaned.csv', header=['importance'])
+        except Exception as e:
+            print(f'XGBoost cleaned training failed: {e}')
+            cleaned_xgb_metrics = {'mae': float('nan'), 'rmse': float('nan'), 'mape': float('nan')}
+            imp_xgb_cleaned = pd.Series(dtype=float)
+    else:
+        cleaned_xgb_metrics = {'mae': float('nan'), 'rmse': float('nan'), 'mape': float('nan')}
+        imp_xgb_cleaned = pd.Series(dtype=float)
 
     # Save report
     report = {
         'alpha_grid': list(ALPHA_GRID),
         'best_alpha': best_alpha,
         'alpha_grid_results': alpha_results,
-        'baseline_metrics': baseline_metrics,
-        'cleaned_metrics': cleaned_metrics,
+        'baseline_metrics_ridge': baseline_metrics,
+        'cleaned_metrics_ridge': cleaned_metrics,
+        'best_xgb_params': best_xgb_params,
+        'xgb_grid_results': xgb_results,
+        'baseline_metrics_xgb': baseline_xgb_metrics,
+        'cleaned_metrics_xgb': cleaned_xgb_metrics,
         'dropped_features': drop_list,
         'rare_wcodes_grouped': rare_wcodes,
         'feature_count_before': len(features),
@@ -380,24 +534,60 @@ def run_pipeline():
     with open(REPORT, 'w') as f:
         f.write('ML Pipeline Report\n')
         f.write('==================\n\n')
-        f.write('Ridge Alpha Grid Search:\n')
+        
+        # Ridge results
+        f.write('Ridge Regression Results:\n')
+        f.write('-' * 30 + '\n')
         f.write(f'Alpha grid: {ALPHA_GRID}\n')
         f.write(f'Best alpha selected: {best_alpha} (by CV RMSE)\n')
-        f.write('\n')
-        f.write('Baseline metrics (CV mean) with best alpha:\n')
+        f.write('\nBaseline Ridge metrics (CV mean):\n')
         f.write(json.dumps(baseline_metrics, indent=2))
-        f.write('\n\nCleaned metrics (CV mean, Top-30 preserved) with best alpha:\n')
+        f.write('\n\nCleaned Ridge metrics (CV mean, Top-30 preserved):\n')
         f.write(json.dumps(cleaned_metrics, indent=2))
-        f.write('\n\nDropped features:\n')
+        
+        # XGBoost results
+        f.write('\n\nXGBoost Results:\n')
+        f.write('-' * 30 + '\n')
+        if best_xgb_params is not None:
+            f.write(f'Best XGBoost params: {best_xgb_params}\n')
+            f.write('\nBaseline XGBoost metrics (CV mean):\n')
+            f.write(json.dumps(baseline_xgb_metrics, indent=2))
+            f.write('\n\nCleaned XGBoost metrics (CV mean):\n')
+            f.write(json.dumps(cleaned_xgb_metrics, indent=2))
+        else:
+            f.write('XGBoost training failed\n')
+        
+        # Model comparison
+        f.write('\n\nModel Comparison (RMSE):\n')
+        f.write('-' * 30 + '\n')
+        f.write(f'Ridge Baseline: {baseline_metrics.get("rmse", "N/A"):.4f}\n')
+        f.write(f'Ridge Cleaned:  {cleaned_metrics.get("rmse", "N/A"):.4f}\n')
+        if best_xgb_params is not None:
+            f.write(f'XGBoost Baseline: {baseline_xgb_metrics.get("rmse", "N/A"):.4f}\n')
+            f.write(f'XGBoost Cleaned:  {cleaned_xgb_metrics.get("rmse", "N/A"):.4f}\n')
+        
+        # Feature engineering details
+        f.write('\n\nFeature Engineering:\n')
+        f.write('-' * 30 + '\n')
+        f.write('Dropped features:\n')
         for c in drop_list:
             f.write(f'- {c}\n')
         f.write('\nRare weather-code columns grouped:\n')
         for c in rare_wcodes:
             f.write(f'- {c}\n')
-        f.write('\nFeature importances (baseline top 20):\n')
+        
+        # Feature importances
+        f.write('\n\nFeature Importances (Ridge baseline top 20):\n')
         f.write(imp_baseline.head(20).to_string())
-        f.write('\n\nFeature importances (cleaned top 20):\n')
+        f.write('\n\nFeature Importances (Ridge cleaned top 20):\n')
         f.write(imp_cleaned.head(20).to_string())
+        
+        if best_xgb_params is not None and not imp_xgb_baseline.empty:
+            f.write('\n\nFeature Importances (XGBoost baseline top 20):\n')
+            f.write(imp_xgb_baseline.head(20).to_string())
+            if not imp_xgb_cleaned.empty:
+                f.write('\n\nFeature Importances (XGBoost cleaned top 20):\n')
+                f.write(imp_xgb_cleaned.head(20).to_string())
 
     # Save metrics JSON
     with open(METRICS, 'w') as f:
