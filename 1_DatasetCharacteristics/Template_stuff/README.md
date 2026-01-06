@@ -24,10 +24,16 @@
 ### Feature Description
 [Provide a brief description of each feature or group of features in your dataset. If you have many features, group them logically and describe each group. Include information about data types, ranges, and what each feature represents.]
 
-**Example format:**
-- **Feature 1 (Warengruppe):** Describes the product which has been sold (1 = Bread, 2 = Roles, 3 = Croissant, 4 = Pastry, 5 = cakes, 6 = Seasonal Products)
-- **Feature 2 (Kielerwoche):** Tells, if the respective day is a day when Kieler Woche took place
-- **Feature 3 (is_holiday):** Describes, wether the respective day was a holliday or a working day.
+**Hot encoded Features:**
+- **Feature group 1 (Weekdays):** Hot encoding of the weekdays (monday - sunday)
+- **Feature group 2 (Warengruppe):** Describes the product which has been sold (1 = Bread, 2 = Roles, 3 = Croissant, 4 = Pastry, 5 = cakes, 6 = Seasonal Products) --> was then hot encoded
+- **Feature 3 (Temperature):** cold (>-3°C) - normal (∓3°C) - warm (>3°C), depending on monthly average
+- **Feature 4 (Niederschlag):** Describes if a day was wet or dry
+- **Feature group 5 (weathercode categories):** Classifies and hot encodes the different weathercodes.
+
+**Features created using rolling averages:**
+- **Feature group 6 (Temperature):** 7 day averages
+- **Feature group 7 (Precipitation):** 7 day averages
 
 ## Exploratory Data Analysis
 
