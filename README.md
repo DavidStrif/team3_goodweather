@@ -2,15 +2,16 @@
 
 ## Repository Link
 
-[https://github.com/your_username/your_project_name]
+[https://github.com/DavidStrif/team3_goodweather]
 
 ## Description
 
-[Short project description here. Briefly summarize the problem you are trying to solve and the approach you're taking.]
+This repository is our first project towards Machine Learning. By developing a regression-model and a neural net we try to predict the revenues of a bakery. 
+The model is trained on data over a period of 8 years (01.07.2013 - 31.07.2019 )
 
 ### Task Type
 
-[Image Classification / Chatbot / Regression / Clustering / Other]
+The task is done using a regression analysis and a neural net to predict the values.
 
 ### Results Summary
 
