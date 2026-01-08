@@ -1,4 +1,4 @@
-# [Your Project Title Here]
+# Bakery Sales Prediction - Team 13 Goodweather
 
 ## Repository Link
 
@@ -7,7 +7,7 @@
 ## Description
 
 This repository is our first project towards Machine Learning. By developing a regression-model and a neural net we try to predict the revenues of a bakery. 
-The model is trained on data over a period of 8 years (01.07.2013 - 31.07.2019 )
+The model is trained on data over a period of 8 years (01.07.2013 - 31.07.2019)
 
 ### Task Type
 
@@ -16,19 +16,19 @@ The task is done using a regression analysis and a neural net to predict the val
 ### Results Summary
 
 #### Best Model Performance
-- **Best Model:** [Name and type of the best-performing model"]
-- **Evaluation Metric:** [Primary metric used, e.g., Accuracy, F1-Score, MSE, MAE]
-- **Final Performance:** [Best score achieved, e.g., 95% accuracy, F1-score of 0.87, MSE of 0.12]
+- **Best Model:** neural_net_estimation_3.0.ipynb
+- **Evaluation Metric:** Primary metric used: MAPE-Score
+- **Final Performance:** Best score achieved: MAPE = 20.26 %
 
 #### Model Comparison
-- **Baseline Performance:** [Baseline model performance for comparison]
-- **Improvement Over Baseline:** [Quantitative improvement, e.g., "+12% accuracy", "25% reduction in MSE"]
-- **Best Alternative Model:** [Second-best model and its performance]
+- **Baseline Performance:** R2 = 0.7094  MAPE = 31.78 %
+- **Improvement Over Baseline:** 10% reduction in MAPE
+- **Best Alternative Model:** neural_net_estimation_2.0.ipynb, MAPE = 21,157 %
 
 #### Key Insights
-- **Most Important Features:** [Top 3-5 features that drive model performance]
-- **Model Strengths:** [What the model does well]
-- **Model Limitations:** [Known limitations and failure cases]
+- **Most Important Features:** In our regression model the hot encoded warengruppen showed the highes impact. From our self created variables the holliday was the strongest feature.
+- **Model Strengths:** The prediction could be improved by changing the tuning parameters by quite a lot and even the weaker versions easily outperform our baseline model.
+- **Model Limitations:** The quality of the features themselves could be improved. The significance of most features was not highly significant so our model is bounded by that. When comparing the observed data to our prediction it needs to be mentioned that for single days our model forecasts quite low values.
 - **Business Impact:** [Practical implications of the model performance]
 
 ## Documentation
