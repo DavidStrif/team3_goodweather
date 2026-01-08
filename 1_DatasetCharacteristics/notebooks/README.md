@@ -5,7 +5,7 @@
 ## Dataset Information
 
 ### Dataset Source
-- **Dataset Link:** [[Provide a direct link to your dataset. If the dataset is private, explain the reason and provide contact information for the dataset owner](https://github.com/DavidStrif/team3_goodweather/tree/main/1_DatasetCharacteristics/raw_data)]
+- **Dataset Link:** [[Provide a direct link to your dataset. If the dataset is private, explain the reason and provide contact information for the dataset owner](/workspaces/team3_goodweather/1_DatasetCharacteristics/processed_data/combined_data_final_imputed.csv)]
 
 ### Dataset Characteristics
 - **Number of Observations:** 
@@ -30,10 +30,11 @@
 - **Feature 3 (Temperature):** cold (>-3°C) - normal (∓3°C) - warm (>3°C), depending on monthly average
 - **Feature 4 (Niederschlag):** Describes if a day was wet or dry
 - **Feature group 5 (weathercode categories):** Classifies and hot encodes the different weathercodes.
+- **Feature group 6 (holidays):**  Hot encoding weather a day is a holiday or not.
 
 **Features created using rolling averages:**
-- **Feature group 6 (Temperature):** 7 day averages
-- **Feature group 7 (Precipitation):** 7 day averages
+- **Feature group 7 (Temperature):** 7 day averages
+- **Feature group 8 (Precipitation):** 7 day averages
 
 ## Exploratory Data Analysis
 
