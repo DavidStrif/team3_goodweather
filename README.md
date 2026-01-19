@@ -7,7 +7,8 @@
 ## Description
 
 This repository is our first project towards Machine Learning. By developing a regression-model and a neural net we try to predict the revenues of a bakery. 
-The model is trained on data over a period of 8 years (01.07.2013 - 31.07.2019)
+The model is trained on data over a period of 7 years (01.07.2013 - 31.07.2018).
+The structure used in this and other Readmes might not fit the progress of our work. All files/notebooks are there however. Please just check our repo.
 
 ### Task Type
 
@@ -34,9 +35,9 @@ The task is done using a regression analysis and a neural net to predict the val
 ## Documentation
 
 1. **[Literature Review](0_LiteratureReview/README.md)**
-2. **[Dataset Characteristics](1_DatasetCharacteristics/exploratory_data_analysis.ipynb)**
-3. **[Baseline Model](2_BaselineModel/baseline_model.ipynb)**
-4. **[Model Definition and Evaluation](3_Model/model_definition_evaluation)**
+2. **[Dataset Characteristics](1_DatasetCharacteristics/notebooks/03_feature_engeneering.ipynb)**
+3. **[Baseline Model](2_BaselineModel/linear_regression.ipynb)**
+4. **[Model Definition and Evaluation](3_Model/neural_net_estimation_1.0.ipynb)**
 5. **[Presentation](4_Presentation/README.md)**
 
 ## Cover Image
